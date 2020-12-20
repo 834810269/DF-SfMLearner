@@ -1,0 +1,7 @@
+checkpoints/
+pretrained/
+.idea/
+.git/
+__pycache__
+models/flownet/__pycache__/
+datasets/__pycache__/
