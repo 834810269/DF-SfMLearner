@@ -106,7 +106,8 @@ def compute_losses(tgt_img, ref_imgs, intrinsics,
             #print("==========================================")
             fwd_consistent_mask = fwd_consistent_mask.detach()
             fwd_matches = fwd_matches.detach()
-            mask_f = mask_f.detach()
+            mask_f[:,:,108:148,376:456] = 0.
+            mask_f = mask_f.detach() # [1,1,h,w]
             #print(tgt_depth_scaled[0])
             if with_triangulation:
                 # todo: forward_backward mask
@@ -120,6 +121,8 @@ def compute_losses(tgt_img, ref_imgs, intrinsics,
                 point2d_1_coord, point2d_1_depth, point2d_2_coord, point2d_2_depth, flag = triangulation_forward(intrinsics, pose, fwd_valid_mask, fwd_matches, 0.2, 6000)
 
                 if log_output:
+                    #print(fwd_valid_mask[0])
+                    img_show_singleimage(fwd_valid_mask[0])
                     y_coord = point2d_1_coord[0,:,0].type(torch.long)
                     x_coord = point2d_1_coord[0,:,1].type(torch.long)
                     empty_depth = torch.zeros(tgt_img.size(2),tgt_img.size(3)).to(device)
@@ -141,6 +144,8 @@ def compute_losses(tgt_img, ref_imgs, intrinsics,
                                                                                            pose, flow_t2r_scaled, intrinsic_scaled, forward_mask, with_ssim, padding_mode,(log_output and s==0))
             photo_loss2, geometry_loss2, cross_loss2, backward_mask = compute_pairwise_loss(ref_img_scaled, tgt_img_scaled, ref_depth_scaled, tgt_depth_scaled,
                                                                                             pose_inv, flow_r2t_scaled, intrinsic_scaled, backward_mask, with_ssim, padding_mode,(log_output and s==0))
+            if log_output:
+                plt.show()
 
             photo_loss += (photo_loss1 + photo_loss2)
             geometry_loss += (geometry_loss1 + geometry_loss2)
@@ -177,7 +182,6 @@ def compute_pairwise_loss(tgt_img, ref_img, tgt_depth, ref_depth, pose, flow, in
         de = tensor2array(tgt_depth[0]).transpose(1,2,0)
         img_show_singleimage_numpy(de[:,:,:-1])
     #    show_flow(rigid_flow[0])
-        plt.show()
     #print(tgt_depth[0])
     # compute all loss
     diff_img = weight_mask * diff_img

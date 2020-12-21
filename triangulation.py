@@ -126,7 +126,7 @@ def ray_angle_filter(match, P1, P2, return_angle=False):
                    ((torch.norm(ray1_dir, dim=1, keepdim=True, p=2) + 1e-12) * (
                                torch.norm(verline, dim=1, keepdim=True, p=2) + 1e-12))  # [b,1,n]
 
-    mask = (cosvalue > 0.001).float()  # we drop out angles less than 1' [b,1,n]
+    mask = (cosvalue > 0.01).float()  # we drop out angles less than 1' [b,1,n]
     flag = 0
     num = torch.min(torch.sum(mask, -1)).int()
     if num.cpu().detach().numpy() == 0:

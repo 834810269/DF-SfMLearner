@@ -55,6 +55,7 @@ parser.add_argument('--with-pretrain', type=int,  default=0, help='with or witho
 parser.add_argument('--dataset', type=str, choices=['kitti', 'nyu'], default='kitti', help='the dataset to train')
 parser.add_argument('--pretrained-disp', dest='pretrained_disp', default=None, metavar='PATH', help='path to pre-trained dispnet model')
 parser.add_argument('--pretrained-flow', dest='pretrained_flow', default=None, metavar='PATH', help='path to pre-trained flow_net model')
+parser.add_argument('--pretrained-optimizer', dest='pretrained_optimizer', default=None, metavar='PATH', help='path to pre-trained optimizer')
 parser.add_argument('--name', dest='name', type=str, required=True, help='name of the experiment, checkpoints are stored in checpoints/name')
 parser.add_argument('--padding-mode', type=str, choices=['zeros', 'border'], default='zeros',
                     help='padding mode for image warping : this is important for photometric differenciation when going outside target image.'
@@ -151,7 +152,10 @@ def main():
     if args.pretrained_disp:
         print("=> using pre-trained weights for DispResNet")
         weights = torch.load(args.pretrained_disp)
-        disp_net.load_state_dict(weights['state_dict'])
+        if 'state_dict' in weights.keys():
+            disp_net.load_state_dict(weights['state_dict'])
+        else:
+            disp_net.load_state_dict(weights)
     else:
         disp_net.init_weights()
 
@@ -172,6 +176,11 @@ def main():
     optimizer = torch.optim.Adam(optim_params,
                                  betas=(args.momentum, args.beta),
                                  weight_decay=args.weight_decay)
+
+    if args.pretrained_optimizer:
+        print("=> using pre-trained weights for Optimizer")
+        weights = torch.load(args.pretrained_optimizer)
+        optimizer.load_state_dict(weights['optimizer'])
 
     with open(args.save_path/args.log_summary, 'w') as csvfile:
         writer = csv.writer(csvfile, delimiter='\t')
@@ -219,6 +228,9 @@ def main():
             }, {
                 'epoch': epoch + 1,
                 'state_dict': flow_net.state_dict()
+            }, {
+                'epoch': epoch + 1,
+                'optimizer' : optimizer.state_dict()
             },
             is_best)
 
